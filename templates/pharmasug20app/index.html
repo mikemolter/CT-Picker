@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+
+<head>
+    <meta charset="utf-8">
+    <title>Study Designer Portal</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.js"></script>
+
+    <!-- Latest compiled and minified Locales -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/locale/bootstrap-table-en-US.js"></script>
+
+    <script>
+        var editCT = {'click .edit':function(e,value,row,index){
+            $('#CodeListItemTable').bootstrapTable({
+                url:'GetCodes',
+                queryParams:{CLCode:row.code,ItemOID:row.itemoid,varName:row.var,varType:row.datatype,DefineCLName:row.DefCLName},
+                columns:[{
+                    field:'state',
+                    checkbox:true
+                },{
+                    field:'sv',
+                    title:'Submission Value'
+                },{
+                    field:'Decode',
+                    title:'Decode'
+                },{
+                    field:'termcode',
+                    title:'Code'
+                },{
+                    field:'ItemOID',
+                    class:'hidden'
+                },{
+                    field:'CLCode',
+                    class:'hidden'
+                }]
+            })
+
+            $('#CodeListItemTable').on('load-success.bs.table',function(e) {
+                $('#CLName').val($('#CodeListItemTable').bootstrapTable('getData')[0]['CLName']) ;
+                $('#OrigCLName').val($('#CodeListItemTable').bootstrapTable('getData')[0]['CLName']) ;
+                var Ext = $('#CodeListItemTable').bootstrapTable('getData')[0]['Extensible'] ;
+                if (!Ext) {
+                    $('#extcode').attr('disabled',true) ;
+                    $('#extdecode').attr('disabled',true) ;
+                }
+            })
+            
+            $('#myModal').modal() ;
+        }} ;
+
+        function EditIcon(value,row,index) {
+            if (row['DefCLName']) {
+                return '<a class="edit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i></a>'
+            }
+            else {
+                return '<a class="edit" href="javascript:void(0)"><i class="glyphicon glyphicon-plus"></i></a>'
+            }
+        }
+
+
+        $(document).ready(function(){
+            $('form').submit(function() {
+                $('[name=selections]').val(JSON.stringify($('#CodeListItemTable').bootstrapTable('getSelections'))) ;
+                alert('CodeList "'+$('#CLName').val()+'" has been added');
+             })
+
+             $('#addext').click(function() {
+                 $('#CodeListItemTable').bootstrapTable('append',{'state':true,'sv':$('#extcode').val(),'Decode':$('#extdecode').val(),'termcode':''}) ;
+                 $('#extcode').val('')
+                 $('#extdecode').val('')
+             })
+
+            $('#vars').bootstrapTable({
+                url:'GetVars',
+                columns:[{
+                    field:'var',
+                    title:'Variable'
+                },{
+                    field:'label',
+                    title:'Label'
+                },{
+                    field:'code',
+                    title:'NCI Code'
+                },{
+                    field:'icon',
+                    title:'Edit Codelist',
+                    formatter:EditIcon,
+                    events:editCT,
+                    align:'center'
+                },{
+                    field:'itemoid',
+                    class:'hidden'
+                },{
+                    field:'datatype',
+                    class:'hidden'
+                },{
+                    field:'DefCLName',
+                    class:'hidden'
+                }]
+            })
+        }) ;
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CT Picker</h1>
+        <table id="vars"></table>
+    </div>
+
+    <div id="myModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form id="modalForm" action='RefreshDefine'>
+                    <div id="hidemodal">
+                        <input type='hidden' name='selections'/>
+                        <input type='hidden' name='OriginalCLNAme' id='OrigCLName'/>
+                    </div>
+                    <div class="modal-header" id="mh">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <b>CodeList Name: </b></b><input id="CLName" name="CLName" size="50" placeholder="Enter Codelist name here"/>
+                        <h4 class="modal-title" id="mh4"></h4>
+                    </div>
+
+                    <div class="modal-body" id="mb">
+                        <table id="CodeListItemTable" style="display:block;max-height:200px;overflow-y:auto;-ms-overflow-style:-ms-autohiding-scrollbar;position:sticky"></table>
+                    </div>
+
+                    <div class="modal-footer" id="mf">
+                        <input type="text" placeholder="Enter extended value" style="float:left" id='extcode'>
+                        <input type="submit" class="btn btn-success" value="Ok"><br>
+                        <input type="text" placeholder="Enter extended decode" style="float:left" size="50" id='extdecode'><br><br>
+                        <input type="button" value="Add Extended Value" style="float:left" class="btn btn-success" id="addext">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
